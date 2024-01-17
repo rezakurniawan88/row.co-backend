@@ -11,7 +11,7 @@ import upload from "../middleware/multer.js";
 const route = express.Router();
 
 route.get("/products", getDataProducts);
-route.get("/product/:id", getSingleProduct);
+route.get("/product/:slug", getSingleProduct);
 route.post("/product", (req, res) => {
     upload.array('images', 3)(req, res, (err) => {
       if (err) {

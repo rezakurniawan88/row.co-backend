@@ -6,7 +6,11 @@ import multer from "multer";
 // Get Data Products
 export const getDataProducts =  async (req, res) => {
     try {
-        const dataProducts = await prisma.products.findMany();
+        const dataProducts = await prisma.products.findMany({
+          orderBy: {
+            id: "desc"
+          }
+        });
         res.status(200).json({
             data: dataProducts
         });
@@ -17,11 +21,11 @@ export const getDataProducts =  async (req, res) => {
 
 //Get Single Data
 export const getSingleProduct = async (req, res) => {
-    const { id } = req.params;
+    const { slug } = req.params;
     try {
-        const product = await prisma.products.findUnique({
+        const product = await prisma.products.findFirst({
             where: {
-                id: parseInt(id)
+                slug: slug
             }
         });
         if(!product) return res.status(404).json({message: "No data found"});
@@ -36,7 +40,11 @@ export const getSingleProduct = async (req, res) => {
 // Create Product
   export const createProduct = async (req, res) => {
     try {
-        const { title, price, description, category, colors, sizes } = req.body;
+        const { title, price, description, category } = req.body;
+        const colors = req.body.colors.split(",");
+        const sizes = req.body.sizes.split(",");
+        const slug = title.toLowerCase().replace(/\s+/g, '-');
+
         if (!req.files.length) {
           return res.status(400).json({ message: "No images uploaded" });
         }
@@ -46,6 +54,7 @@ export const getSingleProduct = async (req, res) => {
         const createdProduct = await prisma.products.create({
           data: {
             title,
+            slug,
             price: parseInt(price),
             description,
             category,
@@ -61,7 +70,7 @@ export const getSingleProduct = async (req, res) => {
           data: createdProduct
         });
       } catch (error) {
-        console.log(error.message);
+        console.log(error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
     };
@@ -89,7 +98,9 @@ export const updateProduct = async (req, res) => {
       fileName = product.images;
     }
 
-    const { title, price, description, category, colors, sizes } = req.body;
+    const { title, price, description, category } = req.body;
+    const colors = req.body.colors.split(",");
+    const sizes = req.body.sizes.split(",");
     const url = fileName.map((image) => `${req.protocol}://${req.get("host")}/images/${image}`)
 
     try {
